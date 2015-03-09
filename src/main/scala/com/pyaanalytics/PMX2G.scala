@@ -13,47 +13,62 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 package com.pyaanalytics
 
+import org.apache.spark.graphx._
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
+import org.apache.spark.rdd.RDD
 
 import scopt.OptionParser
-import scala.math.random
-import scala.collection.mutable._
+import scala.xml._
 
-case class RandomTextWriterConfig(output: String = "",
-                                  minKey: Int = 5, maxKey: Int = 10,
-                                  minValue: Int = 10, maxValue: Int = 100,
-                                  mapNum: Int = 1,
-                                  userName: String = "spark",
-                                  megaBytesPerMap: Long = 1)
+object PMX2G {
 
-object RandomTextWriter {
+  class VertexProperty()
+  case class AuthorProperty(name: String) extends VertexProperty
+  case class PaperProperty(pmid: Int) extends VertexProperty
+
+  case class Vertex(vid: VertexId, prop: VertexProperty)
+
+  case class PMX2GConfig(xmlFile: String = "",
+                       sparkMaster: String = "Master",
+                       mapNum: Int = 1,
+                       userName: String = "spark")
+
+  def hash64(string: String): Long = {
+    string.map(_.toLong).foldLeft(1125899906842597L)((h: Long, c: Long) => 31 * h + c)
+  }
+
+  def processRecord(recString: String): Seq[(Vertex, Vertex)] = {
+    try {
+      val rec = XML.loadString(recString)
+      val pmid = (rec \\ "MedlineCitation" \ "PMID").text
+      val thisVert = Vertex(hash64(pmid), PaperProperty(pmid.toInt))
+      val abstractText = rec \\ "MedlineCitation" \ "Article" \ "Abstract" \ "AbstractText"
+      if (abstractText.length == 0 || pmid.toInt == 0) {return Seq()}
+      val firstNames = (rec \\ "AuthorList" \ "Author" \ "ForeName") map (_.text)
+      val lastNames = (rec \\ "AuthorList" \ "Author" \ "LastName") map (_.text)
+      val authors = firstNames
+        .zip(lastNames)
+        .map{case (f, l) => f + " " + l}
+        .map{x => Vertex(hash64(x), AuthorProperty(x))}
+      val citations = (rec \\ "CommentCorrectionsList" \ "CommentsCorrections" \ "PMID")
+        .map{x => Vertex(hash64(x.text), PaperProperty(x.text.toInt))}
+      authors.map((thisVert, _)) ++ citations.map((thisVert, _))
+    } catch {
+      case e: Exception => Seq()
+    }
+  }
 
   def main(args: Array[String]): Unit = {
 
-    val parser = new OptionParser[RandomTextWriterConfig]("RandomTextWriter") {
-      opt[Int]('k', "minKey") valueName("minKey") action {
-        (x, c) => c.copy(minKey = x)
-      }
+    val parser = new OptionParser[PMX2GConfig]("PMX2G") {
 
-      opt[Int]('K', "maxKey") valueName("maxKey") action {
-        (x, c) => c.copy(maxKey = x)
-      }
-
-      opt[Int]('v', "minValue") valueName("minValue") action {
-        (x, c) => c.copy(minValue = x)
-      }
-
-      opt[Int]('V', "maxValue") valueName("maxValue") action {
-        (x, c) => c.copy(maxValue = x)
-      }
-
-      opt[Long]('b', "megaBytesPerMap [MB]") valueName("megaBytesPerMap") action {
-        (x, c) => c.copy(megaBytesPerMap = x)
+      arg[String]("sparkMaster") valueName("sparkMaster") action {
+        (x, c) => c.copy(sparkMaster = x)
       }
 
       opt[Int]('n', "mapNum") valueName("mapNum") action {
@@ -64,77 +79,30 @@ object RandomTextWriter {
         (x, c) => c.copy(userName = x)
       }
 
-      arg[String]("output") valueName("output") action {
-        (x, c) => c.copy(output = x)
+      arg[String]("xmlFile") valueName("xmlFile") action {
+        (x, c) => c.copy(xmlFile = x)
       }
     }
 
-    parser.parse(args, RandomTextWriterConfig()) map { config =>
-      val wordsInKeyRange = config.maxKey - config.minKey
-      val wordsInValueRange = config.maxValue - config.minValue
+    parser.parse(args, PMX2GConfig()) match {
+      case Some(config) => {
+        val sparkConf = new SparkConf().setAppName("XML 2 Graph").setMaster(config.sparkMaster)
+        val sc = new SparkContext(sparkConf)
 
-      val sparkConf = new SparkConf()
-      val sc = new SparkContext(sparkConf)
-
-      val randomTextWriter = new RandomTextWriter(sc, config.minKey, wordsInKeyRange,
-        config.minValue, wordsInValueRange, config.mapNum, config.megaBytesPerMap, config.output)
-
-      println("Total size: " + randomTextWriter.totalSize.value + " [byte]")
-
-      sc.stop()
-
-    } getOrElse {
-      System.exit(1)
-    }
-
-  }
-}
-
-@SerialVersionUID(1L)
-class RandomTextWriter(sc: SparkContext, minKey: Int, wordsInKeyRange: Int,
-          minValue: Int, wordsInValueRange: Int, mapNum: Int, megaBytesPerMap: Long, output: String) 
-          extends Serializable {
-
-  val totalSize = sc.accumulator(0: Long)
-
-  sc.parallelize(1 to mapNum, mapNum).flatMap { id =>
-    val iter = new Iterator[(String, String)] {
-      private var bytes: Long = megaBytesPerMap * 1024 * 1024
-      def hasNext = bytes > 0
-      def next = {
-        if (bytes > 0) {
-          val noWordsKey = if (wordsInKeyRange != 0) (minKey + random * wordsInKeyRange).toInt else 0
-          val noWordsValue = if (wordsInValueRange != 0) (minValue + random * wordsInValueRange).toInt else 0
-
-          val keyWords = generateSentence(noWordsKey)
-          val valueWords = generateSentence(noWordsValue)
-
-          bytes -= keyWords.getBytes("utf8").length + valueWords.getBytes("utf8").length
-          totalSize += keyWords.getBytes("utf8").length + valueWords.getBytes("utf8").length
-
-          (keyWords, valueWords)
-        } else {
-          error("next on empty iterator")
-        }
+        val xmlRDD = sc.textFile(config.xmlFile)
+        val nodeRDD = xmlRDD flatMap processRecord
+        val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
+        val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, Null)}
+        vertices.saveAsObjectFile("vertices")
+        edges.saveAsObjectFile("edges")
+        sc.stop()
+      } case None => {
+        System.exit(1)
       }
     }
-
-    iter
-  }.map { t =>
-    t._1 + "\t" + t._2
-  }.saveAsTextFile(output)
-
-  def generateSentence(noWords: Int) = {
-    val sentence = new StringBuilder
-    val space = " "
-
-    for (i <- 0 to noWords -1) {
-      sentence ++= Words.words((random * Words.words.length).toInt)
-      sentence ++= space
-    }
-    sentence.toString
   }
 
+  // def processRecord(recString: String): Option[()]
 
 }
 

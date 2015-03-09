@@ -1,6 +1,6 @@
 name := "PMX2G"
 
-organization := ""
+organization := "PYA Analytics"
 
 version := "0.0.1"
 
@@ -12,14 +12,11 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.0.M5b" % "test" withSources() withJavadoc(),
   "org.scalacheck" %% "scalacheck" % "1.10.0" % "test" withSources() withJavadoc(),
   "org.apache.spark" %% "spark-core" % "1.2.1" % "provided" withSources() withJavadoc(),
-//  "org.apache.spark" %% "spark-streaming" % "1.2.1" % "provided" withSources() withJavadoc(),
-//  "org.apache.spark" %% "spark-sql" % "1.2.1" % "provided" withSources() withJavadoc(),
-//  "org.apache.spark" %% "spark-hive" % "1.2.1" % "provided" withSources() withJavadoc(),
-//  "org.apache.spark" %% "spark-mllib" % "1.2.1" % "provided" withSources() withJavadoc(),
+  "org.apache.spark" %% "spark-graphx" % "1.2.1" % "provided" withSources() withJavadoc(),
   "org.apache.hadoop" % "hadoop-client" % "2.5.0-cdh5.3.1" % "provided" withJavadoc(),
   "com.github.scopt" %% "scopt" % "3.2.0"
 )
 
 
-initialCommands := "import .pmx2g._"
+// initialCommands := "import .pmx2g._"
 
