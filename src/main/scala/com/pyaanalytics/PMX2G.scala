@@ -86,7 +86,11 @@ object PMX2G {
 
     parser.parse(args, PMX2GConfig()) match {
       case Some(config) => {
-        val sparkConf = new SparkConf().setAppName("XML 2 Graph").setMaster(config.sparkMaster)
+        val sparkConf = new SparkConf()
+          .setAppName("XML 2 Graph")
+          .setMaster(config.sparkMaster)
+          .set("spark.executor.memory", "20g")
+          .set("spark.driver.memory", "20g")
         val sc = new SparkContext(sparkConf)
 
         val xmlRDD = sc.textFile(config.xmlFile)
