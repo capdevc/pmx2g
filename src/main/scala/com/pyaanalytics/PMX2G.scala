@@ -90,14 +90,13 @@ object PMX2G {
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
           .set("spark.executor.memory", "20g")
-          .set("spark.driver.memory", "20g")
+          .set("spark.driver.memory", "50g")
         val sc = new SparkContext(sparkConf)
 
-        val xmlRDD = sc.textFile(config.xmlFile)
-        val nodeRDD = xmlRDD flatMap processRecord
+        val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord 
         val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
-        val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, Null)}
         vertices.saveAsObjectFile("vertices")
+        val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, Null)}
         edges.saveAsObjectFile("edges")
         sc.stop()
       } case None => {
