@@ -89,7 +89,6 @@ object PMX2G {
         val sparkConf = new SparkConf()
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
-          .set("spark.executor.memory", "20g")
           .set("spark.driver.memory", "50g")
         val sc = new SparkContext(sparkConf)
 
