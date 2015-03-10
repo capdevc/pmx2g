@@ -25,13 +25,13 @@ import org.apache.spark.rdd.RDD
 import scopt.OptionParser
 import scala.xml._
 
+class VertexProperty()
+case class AuthorProperty(name: String) extends VertexProperty
+case class PaperProperty(pmid: Int) extends VertexProperty
+
+case class Vertex(vid: VertexId, prop: VertexProperty)
+
 object PMX2G {
-
-  class VertexProperty()
-  case class AuthorProperty(name: String) extends VertexProperty
-  case class PaperProperty(pmid: Int) extends VertexProperty
-
-  case class Vertex(vid: VertexId, prop: VertexProperty)
 
   case class PMX2GConfig(xmlFile: String = "",
                        sparkMaster: String = "Master",
@@ -89,7 +89,6 @@ object PMX2G {
         val sparkConf = new SparkConf()
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
-          .set("spark.driver.memory", "50g")
           .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
         sparkConf.registerKryoClasses(Array(classOf[Vertex],
                                             classOf[VertexProperty],
@@ -109,9 +108,4 @@ object PMX2G {
       }
     }
   }
-
-  // def processRecord(recString: String): Option[()]
-
 }
-
-// vim: ft=scala tw=0 sw=2 ts=2 et
