@@ -90,9 +90,15 @@ object PMX2G {
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
           .set("spark.driver.memory", "50g")
+          .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
+        sparkConf.registerKryoClasses(Array(classOf[Vertex],
+                                            classOf[VertexProperty],
+                                            classOf[AuthorProperty],
+                                            classOf[PaperProperty]))
         val sc = new SparkContext(sparkConf)
 
-        val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord 
+        val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
+        nodeRDD.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
         val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
         vertices.saveAsObjectFile("vertices")
         val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, Null)}
