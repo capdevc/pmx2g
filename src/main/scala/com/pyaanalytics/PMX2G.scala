@@ -100,7 +100,7 @@ object PMX2G {
         nodeRDD.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
         val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
         vertices.saveAsObjectFile("vertices")
-        val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, Null)}
+        val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, 0)}
         edges.saveAsObjectFile("edges")
         sc.stop()
       } case None => {
