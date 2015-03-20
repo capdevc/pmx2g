@@ -49,8 +49,8 @@ object PMX2G {
       val thisVert = Vertex(hash64(pmid), PaperProperty(pmid.toInt))
       val abstractText = rec \\ "MedlineCitation" \ "Article" \ "Abstract" \ "AbstractText"
       if (abstractText.length == 0 || pmid.toInt == 0) {return Seq()}
-      val firstNames = (rec \\ "AuthorList" \ "Author" \ "ForeName") map (_.text)
-      val lastNames = (rec \\ "AuthorList" \ "Author" \ "LastName") map (_.text)
+      val firstNames = (rec \\ "AuthorList" \ "Author" \ "ForeName") map (_.text.charAt(0).toLower)
+      val lastNames = (rec \\ "AuthorList" \ "Author" \ "LastName") map (_.text.replaceAll("""\s+$""", "").toLowerCase())
       val authors = firstNames
         .zip(lastNames)
         .map{case (f, l) => f + " " + l}
