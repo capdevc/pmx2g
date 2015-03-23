@@ -100,9 +100,9 @@ object PMX2G {
         val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
         nodeRDD.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
         val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
-        vertices.saveAsTextFile("vertices")
+        vertices.saveAsTextFile(config.vertexPath)
         val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, 0)}
-        edges.saveAsTextFile("edges")
+        edges.saveAsTextFile(config.edgePath)
         sc.stop()
       } case None => {
         System.exit(1)
