@@ -34,9 +34,10 @@ case class Vertex(vid: VertexId, prop: VertexProperty)
 object PMX2G {
 
   case class PMX2GConfig(xmlFile: String = "",
-                       sparkMaster: String = "Master",
-                       mapNum: Int = 1,
-                       userName: String = "spark")
+                         vertexPath: String = "../full_vertices",
+                         edgePath: String = "../full_edges",
+                         sparkMaster: String = "master[64]",
+                       )
 
   def hash64(string: String): Long = {
     string.map(_.toLong).foldLeft(1125899906842597L)((h: Long, c: Long) => 31 * h + c)
@@ -67,20 +68,20 @@ object PMX2G {
 
     val parser = new OptionParser[PMX2GConfig]("PMX2G") {
 
-      arg[String]("sparkMaster") valueName("sparkMaster") action {
-        (x, c) => c.copy(sparkMaster = x)
-      }
-
-      opt[Int]('n', "mapNum") valueName("mapNum") action {
-        (x, c) => c.copy(mapNum = x)
-      }
-
-      opt[String]('u', "userName") valueName("userName") action {
-        (x, c) => c.copy(userName = x)
-      }
 
       arg[String]("xmlFile") valueName("xmlFile") action {
         (x, c) => c.copy(xmlFile = x)
+      }
+
+      arg[String]("vertexPath") valueName("vertexPath") action {
+        (x, c) => c.copy(vertexPath = x)
+      }
+
+      arg[String]("edgePath") valueName("edgePath") action {
+        (x, c) => c.copy(edgePath = x)
+      }
+      arg[String]("sparkMaster") valueName("sparkMaster") action {
+        (x, c) => c.copy(sparkMaster = x)
       }
     }
 
@@ -99,9 +100,9 @@ object PMX2G {
         val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
         nodeRDD.persist(org.apache.spark.storage.StorageLevel.MEMORY_AND_DISK_SER)
         val vertices = nodeRDD flatMap {case (p, v) => Seq(p, v)}
-        vertices.saveAsObjectFile("vertices")
+        vertices.saveAsTextFile("vertices")
         val edges = nodeRDD map {case (p, v) => Edge(p.vid, v.vid, 0)}
-        edges.saveAsObjectFile("edges")
+        edges.saveAsTextFile("edges")
         sc.stop()
       } case None => {
         System.exit(1)
