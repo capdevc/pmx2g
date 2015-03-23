@@ -36,8 +36,8 @@ object PMX2G {
   case class PMX2GConfig(xmlFile: String = "",
                          vertexPath: String = "../full_vertices",
                          edgePath: String = "../full_edges",
-                         sparkMaster: String = "master[64]",
-                       )
+                         sparkMaster: String = "master[64]"
+  )
 
   def hash64(string: String): Long = {
     string.map(_.toLong).foldLeft(1125899906842597L)((h: Long, c: Long) => 31 * h + c)
