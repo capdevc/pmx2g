@@ -91,8 +91,8 @@ object PMX2G {
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
           .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
-          .set("spark.executor.memory", "256g")
-          .set("spark.driver.memory", "256g")
+          .set("spark.executor.memory", "200g")
+          .set("spark.driver.memory", "200g")
 
         sparkConf.registerKryoClasses(Array(classOf[Vertex],
                                             classOf[VertexProperty],
