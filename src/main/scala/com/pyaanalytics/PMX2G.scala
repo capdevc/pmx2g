@@ -90,7 +90,7 @@ object PMX2G {
         val sparkConf = new SparkConf()
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
-          .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
+          .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
           .set("spark.executor.memory", "200g")
           .set("spark.driver.memory", "200g")
 
