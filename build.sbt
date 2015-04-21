@@ -11,8 +11,8 @@ resolvers ++= Seq("cloudera" at "https://repository.cloudera.com/artifactory/clo
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.0.M5b" % "test" withSources() withJavadoc(),
   "org.scalacheck" %% "scalacheck" % "1.10.0" % "test" withSources() withJavadoc(),
-  "org.apache.spark" %% "spark-core" % "1.2.1",
-  "org.apache.spark" %% "spark-graphx" % "1.2.1",
+  "org.apache.spark" %% "spark-core" % "1.3.0",
+  "org.apache.spark" %% "spark-graphx" % "1.3.0",
   "org.apache.hadoop" % "hadoop-client" % "2.4.0",
   "com.github.scopt" %% "scopt" % "3.2.0"
 )

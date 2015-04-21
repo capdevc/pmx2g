@@ -90,14 +90,14 @@ object PMX2G {
         val sparkConf = new SparkConf()
           .setAppName("XML 2 Graph")
           .setMaster(config.sparkMaster)
-          // .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
+          .set("spark.serializer", "org.apache.spark.serializer.KyroSerializer")
           .set("spark.executor.memory", "200g")
           .set("spark.driver.memory", "200g")
 
-        // sparkConf.registerKryoClasses(Array(classOf[Vertex],
-        //                                     classOf[VertexProperty],
-        //                                     classOf[AuthorProperty],
-        //                                     classOf[PaperProperty]))
+        sparkConf.registerKryoClasses(Array(classOf[Vertex],
+                                            classOf[VertexProperty],
+                                            classOf[AuthorProperty],
+                                            classOf[PaperProperty]))
         val sc = new SparkContext(sparkConf)
 
         val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
