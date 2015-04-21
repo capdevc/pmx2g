@@ -94,10 +94,10 @@ object PMX2G {
           .set("spark.executor.memory", "200g")
           .set("spark.driver.memory", "200g")
 
-        sparkConf.registerKryoClasses(Array(classOf[Vertex],
-                                            classOf[VertexProperty],
-                                            classOf[AuthorProperty],
-                                            classOf[PaperProperty]))
+        // sparkConf.registerKryoClasses(Array(classOf[Vertex],
+        //                                     classOf[VertexProperty],
+        //                                     classOf[AuthorProperty],
+        //                                     classOf[PaperProperty]))
         val sc = new SparkContext(sparkConf)
 
         val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
