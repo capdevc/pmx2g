@@ -35,8 +35,8 @@ object PMX2G {
 
   case class PMX2GConfig(xmlFile: String = "",
                          vertexPath: String = "../full_vertices",
-                         edgePath: String = "../full_edges",
-                         sparkMaster: String = "master[64]"
+                         edgePath: String = "../full_edges"
+                         // sparkMaster: String = "master[64]"
   )
 
   def hash64(string: String): Long = {
@@ -80,24 +80,24 @@ object PMX2G {
       arg[String]("edgePath") valueName("edgePath") action {
         (x, c) => c.copy(edgePath = x)
       }
-      arg[String]("sparkMaster") valueName("sparkMaster") action {
-        (x, c) => c.copy(sparkMaster = x)
-      }
+      // arg[String]("sparkMaster") valueName("sparkMaster") action {
+      //   (x, c) => c.copy(sparkMaster = x)
+      // }
     }
 
     parser.parse(args, PMX2GConfig()) match {
       case Some(config) => {
         val sparkConf = new SparkConf()
           .setAppName("XML 2 Graph")
-          .setMaster(config.sparkMaster)
+          // .setMaster(config.sparkMaster)
           .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
           .set("spark.executor.memory", "200g")
           .set("spark.driver.memory", "200g")
 
-        // sparkConf.registerKryoClasses(Array(classOf[Vertex],
-        //                                     classOf[VertexProperty],
-        //                                     classOf[AuthorProperty],
-        //                                     classOf[PaperProperty]))
+        sparkConf.registerKryoClasses(Array(classOf[Vertex],
+                                            classOf[VertexProperty],
+                                            classOf[AuthorProperty],
+                                            classOf[PaperProperty]))
         val sc = new SparkContext(sparkConf)
 
         val nodeRDD = sc.textFile(config.xmlFile) flatMap processRecord
